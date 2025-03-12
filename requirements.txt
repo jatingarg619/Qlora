@@ -1,0 +1,15 @@
+torch>=2.0.0
+transformers>=4.31.0
+datasets>=2.14.0
+accelerate>=0.21.0
+bitsandbytes>=0.39.0
+peft>=0.4.0
+trl>=0.7.2
+scipy
+wandb
+sentencepiece
+huggingface-hub
+gradio
+# For model upload and Spaces
+git-lfs
+python-dotenv 
