@@ -27,6 +27,38 @@ To start the training process, simply run:
 python train.py
 ```
 
+## Using the Model
+
+The model is trained using LoRA (Low-Rank Adaptation), which means it produces adapter weights instead of a full model. To use the model:
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
+import torch
+
+# Load base model
+base_model = AutoModelForCausalLM.from_pretrained(
+    "microsoft/phi-2",
+    torch_dtype=torch.float16,
+    device_map="auto"
+)
+
+# Load adapter weights
+model = PeftModel.from_pretrained(
+    base_model,
+    "jatingocodeo/phi2-finetuned-openassistant"
+)
+
+# Load tokenizer
+tokenizer = AutoTokenizer.from_pretrained("jatingocodeo/phi2-finetuned-openassistant")
+
+# Generate text
+text = "### Instruction:\nWhat is machine learning?\n\n### Response:\n"
+inputs = tokenizer(text, return_tensors="pt").to(model.device)
+outputs = model.generate(**inputs, max_length=200)
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+```
+
 ## Uploading the Model
 
 To upload your fine-tuned model to Hugging Face Hub:
@@ -47,13 +79,25 @@ Make sure you have set up your Hugging Face token in the `.env` file before uplo
 ## Model Configuration
 
 - Base model: microsoft/phi-2
-- LoRA rank: 16
-- LoRA alpha: 32
-- Training epochs: 1
-- Learning rate: 2e-4
-- Batch size: 4 (with gradient accumulation steps of 4)
-- Weight decay: 0.001
+- LoRA Configuration:
+  - Rank (r): 16
+  - Alpha: 32
+  - Target modules: q_proj, k_proj, v_proj, dense
+  - Dropout: 0.05
+- Training parameters:
+  - Epochs: 1
+  - Learning rate: 2e-4
+  - Batch size: 4 (with gradient accumulation steps of 4)
+  - Weight decay: 0.001
 
 ## Output
 
-The fine-tuned model will be saved in the `phi2-finetuned` directory.
+The fine-tuned model will be saved in the `phi2-finetuned` directory with the following structure:
+```
+phi2-finetuned/
+├── final_model/
+│   ├── adapter_config.json       # LoRA configuration
+│   ├── adapter_model.bin        # LoRA weights
+│   └── tokenizer files         # Tokenizer configuration and files
+└── training_log.md             # Training progress and metrics
+```
