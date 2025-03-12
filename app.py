@@ -1,16 +1,22 @@
 import gradio as gr
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
 
 # Load model and tokenizer
 def load_model(model_id):
+    # First load the base model
+    base_model_id = "microsoft/phi-2"
     tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
+    base_model = AutoModelForCausalLM.from_pretrained(
+        base_model_id,
         torch_dtype=torch.float16,
         device_map="auto",
         trust_remote_code=True
     )
+    
+    # Load and merge the LoRA adapter
+    model = PeftModel.from_pretrained(base_model, model_id)
     return model, tokenizer
 
 def generate_response(instruction, model, tokenizer, max_length=200, temperature=0.7, top_p=0.9):
@@ -104,6 +110,6 @@ def create_demo(model_id):
 
 if __name__ == "__main__":
     # Replace with your model ID (username/model-name)
-    model_id = "your-username/phi2-finetuned-oasst"
+    model_id = "jatingocodeo/phi2-finetuned-openassistant"
     demo = create_demo(model_id)
     demo.launch() 
